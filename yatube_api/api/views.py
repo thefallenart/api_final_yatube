@@ -9,14 +9,8 @@ from api.serializers import (
 from posts.models import Group, Post
 
 
-class CreateListGenericViewSet(mixins.CreateModelMixin,
-                               mixins.ListModelMixin,
-                               viewsets.GenericViewSet):
-    pass
-
-
 class PostViewSet(viewsets.ModelViewSet):
-    '''Вьюсет получает записи, изменения и удаления постов.'''
+    """Вьюсет получает записи, изменения и удаления постов."""
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = LimitOffsetPagination
@@ -31,23 +25,27 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
-    '''Вьюсет получает данные групп пользователей.'''
+    """Вьюсет получает данные групп пользователей."""
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (permissions.AllowAny,)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    '''Вьюсет получает записи и изменения комментариев.'''
+    """Вьюсет получает записи и изменения комментариев."""
     serializer_class = CommentSerializer
     permission_classes = [
         IsAuthorOrReadOnly,
         permissions.IsAuthenticatedOrReadOnly
     ]
 
+    def get_post(self):
+        """Возвращает пост по ID, переданному в URL параметре."""
+        return get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+
     def get_queryset(self):
         """Возвращает queryset c комментариями для текущей поста."""
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        post = self.get_post()
         return post.comments.all()
 
     def perform_create(self, serializer):
@@ -55,11 +53,13 @@ class CommentViewSet(viewsets.ModelViewSet):
         Создает комментарий для поста с id,
         где автором является пользователь из запроса.
         """
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        post = self.get_post()
         serializer.save(author=self.request.user, post=post)
 
 
-class FollowViewSet(CreateListGenericViewSet):
+class FollowViewSet(mixins.CreateModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
     """Вьюсет для обьектов модели Follow."""
     serializer_class = FollowSerializer
     permission_classes = (permissions.IsAuthenticated,)
