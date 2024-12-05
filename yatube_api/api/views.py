@@ -20,7 +20,10 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [
+        IsAuthorOrReadOnly,
+        permissions.IsAuthenticatedOrReadOnly
+    ]
 
     def perform_create(self, serializer):
         """Создает запись, где автором является пользователем из запроса."""
@@ -37,7 +40,10 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     '''Вьюсет получает записи и изменения комментариев.'''
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [
+        IsAuthorOrReadOnly,
+        permissions.IsAuthenticatedOrReadOnly
+    ]
 
     def get_queryset(self):
         """Возвращает queryset c комментариями для текущей поста."""
